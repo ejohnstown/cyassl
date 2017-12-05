@@ -137,8 +137,8 @@ CYASSL_API int GmacUpdate(Gmac* gmac, const byte* iv, word32 ivSz,
                               byte* authTag, word32 authTagSz);
 #endif /* HAVE_AESGCM */
 #ifdef HAVE_AESCCM
-CYASSL_API void AesCcmSetKey(Aes* aes, const byte* key, word32 keySz);
-CYASSL_API void AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
+CYASSL_API int  AesCcmSetKey(Aes* aes, const byte* key, word32 keySz);
+CYASSL_API int  AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
                               const byte* nonce, word32 nonceSz,
                               byte* authTag, word32 authTagSz,
                               const byte* authIn, word32 authInSz);
@@ -172,6 +172,17 @@ CYASSL_API int  AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
                               word32 sz, const byte* iv, word32 ivSz,
                               const byte* authTag, word32 authTagSz,
                               const byte* authIn, word32 authInSz);
+    #if defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
+        CYASSL_API int AesCcmSetKey_fips(Aes* aes, const byte* key, word32 len);
+        CYASSL_API int AesCcmEncrypt_fips(Aes* aes, byte* out, const byte* in,
+                                  word32 sz, const byte* iv, word32 ivSz,
+                                  byte* authTag, word32 authTagSz,
+                                  const byte* authIn, word32 authInSz);
+        CYASSL_API int AesCcmDecrypt_fips(Aes* aes, byte* out, const byte* in,
+                                  word32 sz, const byte* iv, word32 ivSz,
+                                  const byte* authTag, word32 authTagSz,
+                                  const byte* authIn, word32 authInSz);
+    #endif /* HAVE_FIPS_VERSION 2 */
     #ifndef FIPS_NO_WRAPPERS
         /* if not impl or fips.c impl wrapper force fips calls if fips build */
         #define AesSetKey     AesSetKey_fips
@@ -181,6 +192,9 @@ CYASSL_API int  AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
         #define AesGcmSetKey  AesGcmSetKey_fips
         #define AesGcmEncrypt AesGcmEncrypt_fips
         #define AesGcmDecrypt AesGcmDecrypt_fips
+        #define AesCcmSetKey  AesCcmSetKey_fips
+        #define AesCcmEncrypt AesCcmEncrypt_fips
+        #define AesCcmDecrypt AesCcmDecrypt_fips
     #endif /* FIPS_NO_WRAPPERS */
 
 #endif /* HAVE_FIPS */

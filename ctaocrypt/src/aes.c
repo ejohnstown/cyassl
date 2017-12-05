@@ -3342,15 +3342,15 @@ CYASSL_API int GmacUpdate(Gmac* gmac, const byte* iv, word32 ivSz,
 
 #endif
 
-void AesCcmSetKey(Aes* aes, const byte* key, word32 keySz)
+int AesCcmSetKey(Aes* aes, const byte* key, word32 keySz)
 {
     byte nonce[AES_BLOCK_SIZE];
 
     if (!((keySz == 16) || (keySz == 24) || (keySz == 32)))
-        return;
+        return BAD_FUNC_ARG;
 
     XMEMSET(nonce, 0, sizeof(nonce));
-    AesSetKey(aes, key, keySz, nonce, AES_ENCRYPTION);
+    return AesSetKey(aes, key, keySz, nonce, AES_ENCRYPTION);
 }
 
 
@@ -3448,7 +3448,7 @@ static INLINE void AesCcmCtrInc(byte* B, word32 lenSz)
 }
 
 
-void AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
+int  AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
                    const byte* nonce, word32 nonceSz,
                    byte* authTag, word32 authTagSz,
                    const byte* authIn, word32 authInSz)
@@ -3461,6 +3461,11 @@ void AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
     #ifdef FREESCALE_MMCAU
         byte* key = (byte*)aes->key;
     #endif
+
+    /* sanity check on arguments */
+    if (aes == NULL || out == NULL || in == NULL || nonce == NULL
+            || authTag == NULL || nonceSz < 7 || nonceSz > 13)
+        return BAD_FUNC_ARG;
 
     XMEMCPY(B+1, nonce, nonceSz);
     lenSz = AES_BLOCK_SIZE - 1 - (byte)nonceSz;
@@ -3516,8 +3521,10 @@ void AesCcmEncrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
         XMEMCPY(out, A, inSz);
     }
 
-    XMEMSET(A, 0, AES_BLOCK_SIZE);
-    XMEMSET(B, 0, AES_BLOCK_SIZE);
+    ForceZero(A, AES_BLOCK_SIZE);
+    ForceZero(B, AES_BLOCK_SIZE);
+
+    return 0;
 }
 
 
@@ -3537,6 +3544,11 @@ int  AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
         byte* key = (byte*)aes->key;
     #endif
 
+    /* sanity check on arguments */
+    if (aes == NULL || out == NULL || in == NULL || nonce == NULL
+            || authTag == NULL || nonceSz < 7 || nonceSz > 13)
+        return BAD_FUNC_ARG;
+
     o = out;
     oSz = inSz;
     XMEMCPY(B+1, nonce, nonceSz);
@@ -3546,7 +3558,7 @@ int  AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
     for (i = 0; i < lenSz; i++)
         B[AES_BLOCK_SIZE - 1 - i] = 0;
     B[15] = 1;
-    
+
     while (oSz >= AES_BLOCK_SIZE) {
         #ifdef FREESCALE_MMCAU
             cau_aes_encrypt(B, key, aes->rounds, A);
@@ -3608,7 +3620,7 @@ int  AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
     #endif
     xorbuf(A, B, authTagSz);
 
-    if (XMEMCMP(A, authTag, authTagSz) != 0) {
+    if (ConstantCompare(A, authTag, authTagSz) != 0) {
         /* If the authTag check fails, don't keep the decrypted data.
          * Unfortunately, you need the decrypted data to calculate the
          * check value. */
@@ -3616,8 +3628,8 @@ int  AesCcmDecrypt(Aes* aes, byte* out, const byte* in, word32 inSz,
         result = AES_CCM_AUTH_E;
     }
 
-    XMEMSET(A, 0, AES_BLOCK_SIZE);
-    XMEMSET(B, 0, AES_BLOCK_SIZE);
+    ForceZero(A, AES_BLOCK_SIZE);
+    ForceZero(B, AES_BLOCK_SIZE);
     o = NULL;
 
     return result;
