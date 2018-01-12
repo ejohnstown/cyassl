@@ -30,7 +30,11 @@
         #error "Hash DRBG requires SHA-256."
     #endif /* NO_SHA256 */
 
-    #include <cyassl/ctaocrypt/sha256.h>
+    #if defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
+        #include <wolfssl/wolfcrypt/sha256.h>
+    #else
+        #include <cyassl/ctaocrypt/sha256.h>
+    #endif
 #else /* HAVE_HASHDRBG || NO_RC4 */
     #include <cyassl/ctaocrypt/arc4.h>
 #endif /* HAVE_HASHDRBG || NO_RC4 */
