@@ -45,8 +45,6 @@
 
 #if defined(HAVE_HASHDRBG) || defined(NO_RC4)
 
-    #include <cyassl/ctaocrypt/sha256.h>
-
     #ifdef NO_INLINE
         #include <cyassl/ctaocrypt/misc.h>
     #else

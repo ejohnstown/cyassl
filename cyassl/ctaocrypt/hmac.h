@@ -36,11 +36,7 @@
 #endif
 
 #ifndef NO_SHA256
-    #if defined(HAVE_FIPS_VERSION) && (HAVE_FIPS_VERSION >= 2)
-        #include <wolfssl/wolfcrypt/sha256.h>
-    #else
-        #include <cyassl/ctaocrypt/sha256.h>
-    #endif
+    #include <cyassl/ctaocrypt/sha256.h>
 #endif
 
 #ifdef CYASSL_SHA512
